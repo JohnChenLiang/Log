@@ -14,6 +14,9 @@ public @interface LoggerAnnotation {
 
         //员工
         update_emp("员工模块", "修改员工信息"),
+
+        //支出
+        update_spend("支出模块", "修改"),
         ;
 
         private String modelName;
