@@ -1,6 +1,7 @@
 package com.example.log.aop;
 
 
+import com.alibaba.fastjson.JSON;
 import com.example.log.annotation.LoggerAnnotation;
 import com.example.log.pojo.Log;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -8,6 +9,7 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -48,9 +50,30 @@ public class WebLogAspect {
             log.setCreateDate(new Date()); //时间是现在。
             log.setCreateMan("CL"); //这里操作人直接写死。这里简化了，其实可以从Session里获得操作人名字。
 
-            //第一个参数是 交换器名称。第二个参数是 路由key。第三个参数是要传递的对象。
-            //Routing（路由模式）：有选择的接收消息。用过这个。用direct交换机，有routingKey。消息发到交换机，再根据 路由key 发到对应队列。
-            rabbitTemplate.convertAndSend("log.test.exchange", "log.test.routing.key", log);
+            //三个不同的convertAndSend，推荐用第二个持久化的消息。
+
+//            //消息 没有持久化的convertAndSend
+//            //第一个参数是 交换器名称。第二个参数是 路由key。第三个参数是要传递的对象。
+//            //Routing（路由模式）：有选择的接收消息。用过这个。用direct交换机，有routingKey。消息发到交换机，再根据 路由key 发到对应队列。
+//            rabbitTemplate.convertAndSend("log.test.exchange", "log.test.routing.key", log);
+
+            //消息 持久化的convertAndSend。直接传log 不用把log序列化放到message里。这样也不用导阿里巴巴的fastjson依赖。
+            MessagePostProcessor processor = message -> {
+                //消息持久化设置（取值有两个 NON_PERSISTENT=1，PERSISTENT=2）
+                message.getMessageProperties().setDeliveryMode(MessageDeliveryMode.PERSISTENT);
+                return message;
+            };
+            rabbitTemplate.convertAndSend("log.test.exchange", "log.test.routing.key", log, processor);
+//
+//            //消息 持久化的convertAndSend。log放在Message里的。这样log对象需要转为string还要再转为bytes。也要导个阿里巴巴的fastjson依赖。
+//            Message message = MessageBuilder.withBody(JSON.toJSONString(log).getBytes())
+//                    .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
+//                    .build();
+//            MessageProperties messageProperties = message.getMessageProperties();
+//            messageProperties.setContentType(MessageProperties.CONTENT_TYPE_JSON);
+//            rabbitTemplate.convertAndSend("log.test.exchange", "log.test.routing.key", message);
+
+
             System.out.println("发送消息=" + log.toString());
         }
         return proceed;
