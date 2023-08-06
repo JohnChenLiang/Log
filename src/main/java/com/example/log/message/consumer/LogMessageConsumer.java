@@ -13,7 +13,8 @@ import java.io.IOException;
 public class LogMessageConsumer {
 
 //    //对应第一个convertAndSend
-//    //接没有持久化的消息，参数是 对象。因为配置里设置了手动ack，代码里没ack，所以队列里的消息都是unack的状态。
+//    //接没有持久化的消息，参数是 对象。
+//    // 因为配置 application.properties(不是RabbitmqConfig)，设置了手动ack，代码里没ack，所以队列里的消息都是unack的状态。
 //    //接收对象。@RabbitListener 标注在方法上，是指定某方法作为消息消费的方法，直接监听指定的队列，此时接收的参数需要与发送的类型一致。
 //    @RabbitListener(queues = "log.test.queue")
 //    public void LogMessageConsumer(Log log){

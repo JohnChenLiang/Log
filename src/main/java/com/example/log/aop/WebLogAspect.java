@@ -52,11 +52,14 @@ public class WebLogAspect {
 
             //三个不同的convertAndSend，推荐用第二个持久化的消息。
 
+//            //1.
 //            //消息 没有持久化的convertAndSend
 //            //第一个参数是 交换器名称。第二个参数是 路由key。第三个参数是要传递的对象。
 //            //Routing（路由模式）：有选择的接收消息。用过这个。用direct交换机，有routingKey。消息发到交换机，再根据 路由key 发到对应队列。
 //            rabbitTemplate.convertAndSend("log.test.exchange", "log.test.routing.key", log);
 
+
+            //2.
             //消息 持久化的convertAndSend。直接传log 不用把log序列化放到message里。这样也不用导阿里巴巴的fastjson依赖。
             MessagePostProcessor processor = message -> {
                 //消息持久化设置（取值有两个 NON_PERSISTENT=1，PERSISTENT=2）
@@ -64,7 +67,9 @@ public class WebLogAspect {
                 return message;
             };
             rabbitTemplate.convertAndSend("log.test.exchange", "log.test.routing.key", log, processor);
-//
+
+
+//            //3.
 //            //消息 持久化的convertAndSend。log放在Message里的。这样log对象需要转为string还要再转为bytes。也要导个阿里巴巴的fastjson依赖。
 //            Message message = MessageBuilder.withBody(JSON.toJSONString(log).getBytes())
 //                    .setDeliveryMode(MessageDeliveryMode.PERSISTENT)
